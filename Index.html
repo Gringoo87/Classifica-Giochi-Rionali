@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classifica Squadre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #admin-section {
+            margin-top: 40px;
+            display: none;
+        }
+        #login-form {
+            margin-bottom: 20px;
+        }
+        input[type="password"], input[type="number"] {
+            padding: 5px;
+            margin: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #error-message {
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Classifica Squadre</h1>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>Posizione</th>
+                <th>Squadra</th>
+                <th>Punteggio</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- La classifica verrà popolata qui via JS -->
+        </tbody>
+    </table>
+
+    <button id="show-admin">Accedi per Modificare</button>
+    
+    <div id="admin-section">
+        <h2>Area Amministratore</h2>
+        <div id="login-form">
+            <label for="password">Password:</label>
+            <input type="password" id="password">
+            <button id="login-btn">Accedi</button>
+            <p id="error-message">Password errata!</p>
+        </div>
+        <div id="edit-form" style="display: none;">
+            <h3>Modifica Punteggi</h3>
+            <div id="teams-edit"></div>
+            <button id="save-btn">Salva Modifiche</button>
+            <button id="logout-btn">Esci</button>
+        </div>
+    </div>
+
+    <script>
+        // Password hardcoded (cambiala se vuoi)
+        const ADMIN_PASSWORD = 'password123';
+
+        // Squadre iniziali
+        let teams = [
+            { name: 'San Michele', score: 0 },
+            { name: 'Melopiano', score: 0 },
+            { name: 'Palluzza', score: 0 },
+            { name: 'San Nicola', score: 0 }
+        ];
+
+        // Carica da localStorage se esiste
+        if (localStorage.getItem('teams')) {
+            teams = JSON.parse(localStorage.getItem('teams'));
+        }
+
+        // Funzione per aggiornare la classifica
+        function updateLeaderboard() {
+            // Ordina per punteggio decrescente
+            teams.sort((a, b) => b.score - a.score);
+
+            const tbody = document.querySelector('#leaderboard tbody');
+            tbody.innerHTML = '';
+            teams.forEach((team, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${team.name}</td>
+                    <td>${team.score}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Funzione per mostrare il form di modifica
+        function showEditForm() {
+            const editDiv = document.getElementById('teams-edit');
+            editDiv.innerHTML = '';
+            teams.forEach(team => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label>${team.name}:</label>
+                    <input type="number" value="${team.score}" data-name="${team.name}">
+                `;
+                editDiv.appendChild(div);
+            });
+        }
+
+        // Eventi
+        document.getElementById('show-admin').addEventListener('click', () => {
+            document.getElementById('admin-section').style.display = 'block';
+        });
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const pw = document.getElementById('password').value;
+            if (pw === ADMIN_PASSWORD) {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('edit-form').style.display = 'block';
+                showEditForm();
+            } else {
+                document.getElementById('error-message').style.display = 'block';
+            }
+        });
+
+        document.getElementById('save-btn').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('#teams-edit input');
+            inputs.forEach(input => {
+                const name = input.getAttribute('data-name');
+                const score = parseInt(input.value) || 0;
+                const team = teams.find(t => t.name === name);
+                if (team) team.score = score;
+            });
+            localStorage.setItem('teams', JSON.stringify(teams));
+            updateLeaderboard();
+            alert('Punteggi salvati!');
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            document.getElementById('admin-section').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('edit-form').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('password').value = '';
+        });
+
+        // Inizializza
+        updateLeaderboard();
+    </script>
+</body>
+</html>
